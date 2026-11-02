@@ -1,0 +1,26 @@
+{
+  "id": "./",
+  "name": "Esports Arena Bracket Predictor",
+  "short_name": "Arena Bracket",
+  "description": "A futuristic esports tournament arena for brackets, predictions and live results.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#050914",
+  "theme_color": "#050914",
+  "icons": [
+    {
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

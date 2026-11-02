@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#07061a">
+  <meta name="description" content="Create esports tournaments, manage brackets, and predict winners.">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+<title>Esports Bracket Predictor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&display=swap">
+<style>
+
+:root{color-scheme:dark;--bg:#050914;--bg2:#0a1224;--ink:#eef7ff;--mute:#91a5c4;--card:rgba(12,24,44,.82);--line:rgba(83,205,255,.2);--cyan:#39e8ff;--pink:#ff3e9d;--gold:#ffd36a;--violet:#8b68ff;--scan:rgba(74,215,255,.035);--bm1:rgba(0,224,255,.16);--bm2:rgba(255,46,147,.14);box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:16px}
+body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 50% -20%,#18365a 0,#0a1428 38%,#050914 78%);color:var(--ink);font:500 15px/1.5 "Chakra Petch",system-ui,sans-serif;overflow-x:hidden}
+.stage{position:fixed;inset:0;z-index:-3;overflow:hidden;background:linear-gradient(180deg,rgba(3,9,20,.25),rgba(3,7,17,.88)),radial-gradient(ellipse at 50% 0%,#183a60 0,transparent 60%)}
+.stage:before{content:"";position:absolute;inset:18% -20% -30%;background:repeating-linear-gradient(90deg,transparent 0 7.9%,rgba(57,232,255,.12) 8%,transparent 8.1%),repeating-linear-gradient(0deg,transparent 0 11%,rgba(57,232,255,.08) 11.1%,transparent 11.2%);transform:perspective(500px) rotateX(62deg) scale(1.5);transform-origin:50% 100%;mask-image:linear-gradient(transparent,black 35%,black)}
+.stage:after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(255,255,255,.018) 0 1px,transparent 1px 4px);pointer-events:none}
+.orb{position:absolute;width:60vmax;height:60vmax;border-radius:50%;filter:blur(20px);opacity:.24;animation:drift 16s ease-in-out infinite alternate}
+.o1{left:-22vmax;top:-20vmax;background:radial-gradient(circle,var(--cyan),transparent 65%)}
+.o2{right:-22vmax;bottom:-30vmax;background:radial-gradient(circle,var(--pink),transparent 65%);animation-delay:-8s}
+.beam{position:absolute;top:-10%;height:120%;width:32vmax;clip-path:polygon(50% 0,0 100%,100% 100%);transform-origin:50% 0;filter:blur(2px);animation:sway 10s ease-in-out infinite alternate}
+.b-a{left:2%;background:linear-gradient(180deg,rgba(57,232,255,.18),transparent)}
+.b-b{left:35%;background:linear-gradient(180deg,rgba(255,62,157,.15),transparent);animation-delay:-3s}
+.b-c{left:68%;background:linear-gradient(180deg,rgba(57,232,255,.14),transparent);animation-delay:-6s}
+@keyframes sway{from{transform:rotate(-12deg)}to{transform:rotate(12deg)}}
+@keyframes drift{to{transform:translate(8vmax,6vmax)}}
+@keyframes neonPulse{0%,100%{box-shadow:0 0 12px rgba(57,232,255,.13),inset 0 0 18px rgba(57,232,255,.035)}50%{box-shadow:0 0 26px rgba(57,232,255,.25),inset 0 0 25px rgba(57,232,255,.08)}}
+@keyframes bracketEnter{from{opacity:0;transform:translateY(16px) rotateX(5deg)}to{opacity:1;transform:translateY(0) rotateX(0)}}
+@keyframes championGlow{0%,100%{filter:drop-shadow(0 0 7px rgba(255,211,106,.3))}50%{filter:drop-shadow(0 0 19px rgba(255,211,106,.8))}}
+#fx{position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none}
+#cf{position:fixed;inset:0;width:100%;height:100%;z-index:50;pointer-events:none}
+.wrap{width:min(1440px,100%);margin:0 auto;padding:30px clamp(14px,3vw,38px) 64px}
+.wrap:before{content:"ARENA / LIVE PREDICTION SYSTEM";display:block;width:max-content;max-width:100%;padding:7px 12px;margin-bottom:14px;border:1px solid rgba(57,232,255,.28);border-radius:4px;background:rgba(7,19,36,.72);color:var(--cyan);font-size:10px;letter-spacing:.2em;font-weight:700}
+h1{position:relative;margin:0;font-size:clamp(32px,6vw,68px);line-height:.98;letter-spacing:-.045em;text-transform:uppercase;text-shadow:0 0 22px rgba(57,232,255,.3),3px 0 0 rgba(255,62,157,.35);max-width:1000px}
+.sub{color:var(--mute);margin:12px 0 22px;max-width:72ch;font-size:14px}
+#note{min-height:22px;color:var(--gold);margin:0 0 12px;font-size:13px}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0 20px}
+button{font:700 13px/1.1 "Chakra Petch",system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;min-height:44px;padding:0 18px;border:1px solid transparent;border-radius:5px;cursor:pointer;color:#03111c;transition:transform .16s,box-shadow .2s,filter .2s;clip-path:polygon(0 0,calc(100% - 9px) 0,100% 9px,100% 100%,9px 100%,0 calc(100% - 9px))}
+button:hover{transform:translateY(-2px);filter:brightness(1.12)}
+button:active{transform:translateY(0) scale(.98)}
+.p1{background:linear-gradient(110deg,#27dff5,#7af3ff);box-shadow:0 0 18px rgba(57,232,255,.2)}
+.p2{background:linear-gradient(110deg,#ff3e9d,#ff77bb);box-shadow:0 0 18px rgba(255,62,157,.18)}
+.ghost{background:rgba(10,22,42,.72);border-color:rgba(139,177,213,.3);color:var(--ink);clip-path:none;border-radius:5px}
+button:disabled{opacity:.4;cursor:not-allowed;transform:none}
+:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+.layout{display:grid;gap:18px;align-items:start}
+@media(min-width:1120px){.layout{grid-template-columns:minmax(0,1fr) 350px}}
+.panel{position:relative;background:linear-gradient(145deg,rgba(15,32,57,.92),rgba(7,16,32,.88));border:1px solid rgba(90,190,232,.22);border-radius:9px;padding:clamp(15px,2vw,22px);backdrop-filter:blur(14px);box-shadow:0 18px 55px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.055);overflow:hidden}
+.panel:before{content:"";position:absolute;inset:0 0 auto;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),var(--pink),transparent);opacity:.8}
+.panel h2{margin:0 0 4px;font-size:clamp(19px,2vw,24px);letter-spacing:.025em;text-transform:uppercase}
+.panel p{margin:5px 0 10px;color:var(--mute);font-size:13px}
+.wrap>.panel{margin-bottom:16px}
+.form{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));align-items:center;margin-top:12px}
+input[type=text],select{font:500 14px "Chakra Petch",system-ui,sans-serif;min-height:46px;padding:0 13px;border-radius:5px;border:1px solid rgba(110,170,210,.28);background:rgba(4,12,26,.8);color:var(--ink);width:100%;outline:none}
+input[type=text]:focus,select:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(57,232,255,.1)}
+input[type=color]{width:100%;min-height:46px;padding:4px;border-radius:5px;border:1px solid var(--line);background:rgba(4,12,26,.8)}
+input[type=range]{width:100%;height:26px;margin:6px 0 4px;accent-color:var(--tc)}
+.bwrap{overflow-x:auto;padding:18px 10px 24px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;perspective:1200px;scrollbar-color:rgba(57,232,255,.4) rgba(255,255,255,.05);scrollbar-width:thin}
+.bracket{display:flex;gap:28px;min-width:max-content;min-height:510px;align-items:stretch;transform-style:preserve-3d}
+.col{flex:0 0 188px;display:flex;flex-direction:column;scroll-snap-align:start;animation:bracketEnter .55s both}
+.col:nth-child(2){animation-delay:.07s}.col:nth-child(3){animation-delay:.14s}.col:nth-child(4){animation-delay:.21s}.col:nth-child(5){animation-delay:.28s}
+.col h3{margin:0 0 14px;padding:9px 11px;border-left:2px solid var(--cyan);background:linear-gradient(90deg,rgba(57,232,255,.11),transparent);font-size:12px;color:#bcefff;letter-spacing:.13em;text-transform:uppercase}
+.matches{flex:1;display:flex;flex-direction:column;justify-content:space-around;gap:14px}
+.match{position:relative;border:1px solid rgba(96,163,205,.27);border-radius:7px;background:rgba(3,12,26,.72);box-shadow:0 10px 25px rgba(0,0,0,.22);transform:translateZ(12px);transition:transform .2s,border-color .2s,box-shadow .2s;overflow:hidden}
+.match:hover{transform:translateZ(22px) scale(1.025);border-color:rgba(57,232,255,.55);box-shadow:0 0 22px rgba(57,232,255,.12)}
+.col:not(:last-child) .match:after{content:"";position:absolute;left:100%;top:50%;width:28px;height:1px;background:linear-gradient(90deg,var(--cyan),rgba(57,232,255,.05));box-shadow:0 0 7px var(--cyan)}
+.col:not(:first-child) .match:before{content:"";position:absolute;right:100%;top:50%;width:28px;height:1px;background:linear-gradient(90deg,rgba(57,232,255,.05),var(--cyan))}
+.row{display:flex;align-items:center;gap:8px;min-height:48px;padding:5px 10px;background:rgba(9,22,41,.88);border-left:3px solid var(--tc,var(--line));font-size:13px;transition:background .2s,opacity .2s}
+.row:first-child{border-radius:5px 5px 0 0}.row:last-child{border-radius:0 0 5px 5px}.row:only-child{border-radius:5px}
+.row+.row{border-top:1px solid rgba(110,170,210,.13)}
+.row span{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row b{font-size:11px;color:#8da8c5;font-variant-numeric:tabular-nums}
+.row.win{background:linear-gradient(90deg,color-mix(in srgb,var(--tc) 24%,rgba(9,22,41,.9)),rgba(9,22,41,.9));box-shadow:inset 0 0 18px color-mix(in srgb,var(--tc) 20%,transparent)}
+.row.win b{color:var(--cyan)}.row.lose{opacity:.36;filter:grayscale(.5)}
+.row.tbd{color:#71839f;font-size:12px;border-left-color:rgba(110,170,210,.2)}
+.row.click{cursor:pointer}.row.click:hover{background:rgba(57,232,255,.14);color:white}
+.row.pred{outline:1px dashed var(--tc);outline-offset:-3px}
+.match.gold{border-color:rgba(255,211,106,.7);box-shadow:0 0 28px rgba(255,211,106,.18);animation:championGlow 3s ease-in-out infinite}
+.match.gold .row{min-height:76px;font-size:17px;justify-content:center;border-left-color:var(--gold);background:linear-gradient(90deg,rgba(255,211,106,.13),rgba(25,27,37,.95))}
+.pop{animation:bracketEnter .5s ease-out}
+.trow{padding:12px 0;border-top:1px solid rgba(110,170,210,.16)}
+.top{display:flex;align-items:center;gap:9px}
+.top span{flex:1;min-width:0}.top output{color:var(--mute);font-size:12px}
+.top b{min-width:55px;text-align:right;color:var(--cyan);font-variant-numeric:tabular-nums}
+.bar{height:6px;border-radius:10px;background:rgba(132,164,197,.16);overflow:hidden;margin-top:8px}
+.bar u{display:block;height:100%;border-radius:10px;background:linear-gradient(90deg,var(--tc),color-mix(in srgb,var(--tc) 50%,white));box-shadow:0 0 12px var(--tc);transition:width .55s}
+.emb{width:27px;height:29px;flex:none;filter:drop-shadow(0 0 5px color-mix(in srgb,var(--tc) 35%,transparent))}
+.chart{width:100%;height:auto;margin-top:8px}
+.tag{font-size:11px;color:var(--mute)}
+.layout.nob{grid-template-columns:1fr!important;max-width:700px}
+.layout.nob #side{max-width:760px}
+#tip{padding:8px 12px;border-left:2px solid var(--gold);background:rgba(255,211,106,.07);font-size:13px}
+.sm{min-height:34px;padding:0 12px;font-size:11px}
+@media(max-width:760px){.wrap{padding:22px 13px 42px}.wrap:before{font-size:9px}.layout{grid-template-columns:minmax(0,1fr)}.bwrap{margin:0 -5px;padding:14px 5px 20px}.bracket{gap:20px;min-height:450px}.col{flex-basis: min(66vw,210px)}.col h3{font-size:11px}.row{min-height:44px;padding:4px 8px;font-size:12px}.actions button{flex:1 1 calc(50% - 10px);padding:0 10px}.actions input{flex:1 1 100%;max-width:none!important}.panel{padding:15px}.sub{font-size:13px}}
+@media(max-width:380px){h1{font-size:30px}.actions button{flex-basis:100%}.col{flex-basis:68vw}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+[hidden]{display:none!important}
+
+.arena-status{display:flex;align-items:center;gap:9px;margin-top:15px;color:#8eaac7;font-size:10px;letter-spacing:.16em;font-weight:700}.status-dot{width:7px;height:7px;border-radius:50%;background:var(--cyan);box-shadow:0 0 12px var(--cyan)}.status-live{margin-left:auto;color:var(--cyan);font-size:9px}@media(max-width:420px){.arena-status{font-size:8px;letter-spacing:.1em}}\n</style>
+</head>
+<body>
+<div class="stage"><div class="orb o1"></div><div class="orb o2"></div><div class="beam b-a"></div><div class="beam b-b"></div><div class="beam b-c"></div></div>
+<canvas id="fx"></canvas><canvas id="cf"></canvas>
+<div class="wrap">
+  <h1 id="title">Esports Bracket Predictor</h1>
+  <div class="arena-status"><span class="status-dot"></span><span>NEON CIRCUIT // TOURNAMENT CONTROL</span><span class="status-live">SYSTEM READY</span></div><p class="sub" id="sub"></p>
+  <p id="note"></p>
+  <section class="panel" id="org" hidden>
+    <h2>Organizer</h2>
+    <div class="form" id="create">
+      <input id="tn" type="text" placeholder="Tournament name" maxlength="40" aria-label="Tournament name">
+      <input id="tg" type="text" placeholder="Game, for example Valorant" maxlength="30" aria-label="Game">
+      <select id="ts" aria-label="Bracket size"><option value="4">4 teams</option><option value="8" selected>8 teams</option><option value="16">16 teams</option></select>
+      <button class="p1" id="mk">Create tournament</button>
+    </div>
+    <div class="actions" id="ctl" style="margin:10px 0 0">
+      <button class="p1" id="go">Generate bracket</button>
+      <button class="ghost" id="rs">Start over</button>
+    </div>
+  </section>
+  <section class="panel" id="reg" hidden>
+    <h2>Join the tournament</h2>
+    <p id="regp"></p>
+    <div class="form">
+      <input id="tm" type="text" placeholder="Your team name" maxlength="24" aria-label="Team name">
+      <input id="tt" type="text" placeholder="Tagline (optional)" maxlength="30" aria-label="Tagline">
+      <input id="tc" type="color" value="#00b8d9" aria-label="Team color">
+      <button class="p2" id="join">Enter team</button>
+      <button class="ghost" id="leave" hidden>Withdraw</button>
+    </div>
+  </section>
+  <div class="actions" id="sim" hidden>
+    <button class="p1" id="pr">Predict bracket</button>
+    <button class="p2" id="rn">Random upset run</button>
+    <button class="ghost" id="mb">My bracket picks</button>
+    <button class="ghost" id="rl">Show real results</button>
+    <input id="nick" type="text" placeholder="Your name for the leaderboard" maxlength="20" aria-label="Leaderboard name" style="max-width:260px" hidden>
+  </div>
+  <p class="sub" id="tip" hidden>Tap a team to record it as the match winner. Tap it again to undo.</p>
+  <div class="layout nob" id="lay">
+    <div class="bwrap" hidden><div class="bracket" id="bracket"></div></div>
+    <section class="panel" id="side"></section>
+  </div>
+</div>
+<script>
+const SIMS=6000,$=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const rid=()=>Math.random().toString(36).slice(2,9);
+const col=id=>(TM[id]&&TM[id].color)||hcol(id),hcol=id=>"hsl("+(Math.abs([...id].reduce((a,c)=>(a*31+c.charCodeAt(0))|0,7))%360)+" 85% 55%)";
+let db=null,uid=null,isOrg=false,mode=0,M=null,TM={},PK={},noteT,celeb="";
+const myId=()=>(db&&!isOrg)?uid:null;
+const nm=id=>TM[id]?esc(TM[id].name):"Withdrawn team";
+const ini=id=>TM[id]?esc(TM[id].name.split(/\s+/).map(w=>w[0]).join("").slice(0,2).toUpperCase()):"?";
+const emb=id=>`<svg class="emb" viewBox="0 0 26 28" aria-hidden="true"><path d="M13 1l11 4v9c0 7-5 11-11 13C7 25 2 21 2 14V5z" fill="${col(id)}"/><text x="13" y="18" text-anchor="middle" font-size="10" font-weight="700" fill="#0a0620">${ini(id)}</text></svg>`;
+const rate=id=>(M&&M.ratings&&M.ratings[id])||1500;
+const p=(a,b)=>1/(1+Math.pow(10,(rate(b)-rate(a))/400));
+const N=()=>Math.round(Math.log2(M.size));
+const rname=(r,n)=>r===n-1?"Grand final":r===n-2?"Semifinals":r===n-3?"Quarterfinals":"Round of "+(2<<(n-1-r));
+function say(t){const e=$("note");e.textContent=t;clearTimeout(noteT);noteT=setTimeout(()=>e.textContent="",5000)}
+const fail=e=>say("Could not save: "+((e&&e.message)||"permission denied"));
+
+/* storage: shared db when available, otherwise this device only */
+async function saveMeta(m){M=m;paint();if(!db){try{m?localStorage.setItem("esports-meta",JSON.stringify(m)):localStorage.removeItem("esports-meta")}catch(e){fail(e)}return}try{const r=db.doc("meta/tournament");m?await r.set(m):await r.delete()}catch(e){fail(e)}}
+async function saveTeam(id,t){if(!db){TM[id]=t;try{localStorage.setItem("esports-teams",JSON.stringify(TM))}catch(e){fail(e)}paint();return}try{await db.doc("teams/"+id).set(t)}catch(e){fail(e)}}
+async function delTeam(id){if(!db){delete TM[id];try{localStorage.setItem("esports-teams",JSON.stringify(TM))}catch(e){fail(e)}paint();return}try{await db.doc("teams/"+id).delete()}catch(e){fail(e)}}
+
+/* bracket engine: real results first, then optional simulation for the rest */
+function resolve(sim,res){
+  const s=[M.order.map(x=>x||null)];
+  for(let r=0;r<N();r++){
+    s[r+1]=[];
+    for(let m=0;m<s[r].length/2;m++){
+      const a=s[r][2*m],b=s[r][2*m+1],x=(res||M.results||{})[r+"-"+m];
+      let w=null;
+      if(!a||!b)w=a||b;
+      else if(x===a||x===b)w=x;
+      else if(sim)w=((sim===1)?p(a,b)>=.5:Math.random()<p(a,b))?a:b;
+      s[r+1][m]=w;
+    }
+  }
+  return s;
+}
+function odds(){
+  const c={};M.order.filter(Boolean).forEach(i=>c[i]=0);
+  for(let n=0;n<SIMS;n++){const w=resolve(2)[N()][0];if(w in c)c[w]++}
+  return c;
+}
+
+const PAL=["#00b8d9","#ff3b5c","#a06cff","#ff9500","#3fbf7a","#ff2e93","#e6b800","#5aa9ff"];
+const myKey=()=>uid||"me";
+const myPk=()=>(PK[myKey()]&&PK[myKey()].picks)||{};
+function snap(m){const o=M;M=m;const c=odds();M=o;const s={};Object.keys(c).forEach(i=>s[i]=Math.round(1000*c[i]/SIMS)/10);return s}
+function score(pk,base){let s=0;for(const k in pk){const [r,m]=k.split("-").map(Number),w=base[r+1]&&base[r+1][m];if(w&&pk[k]===w)s+=1<<r}return s}
+async function savePicks(pk){
+  const d={nick:($("nick").value.trim()||"Player").slice(0,20),picks:pk};
+  PK[myKey()]=d;paint();if(!db){try{localStorage.setItem("esports-picks",JSON.stringify(PK))}catch(e){fail(e)}return;}
+  try{await db.doc("picks/"+uid).set(d)}catch(e){fail(e)}
+}
+function chart(list){
+  const h=M.hist||[];if(h.length<2)return "";
+  const W=300,H=140,mx=Math.max(20,...h.flatMap(s=>Object.values(s)))*1.1,px=i=>10+i*(W-20)/(h.length-1),py=v=>H-10-v*(H-20)/mx;
+  return `<h2 style="margin-top:20px;font-size:18px">How the odds moved</h2><svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Title odds after each recorded result">`+
+    [0,mx/2,mx].map(v=>`<line x1="10" x2="${W-10}" y1="${py(v)}" y2="${py(v)}" style="stroke:var(--line)"/>`).join("")+
+    list.map(i=>`<polyline fill="none" stroke="${col(i)}" stroke-width="2.5" points="${h.map((s,k)=>px(k)+","+py(s[i]||0)).join(" ")}"/>`).join("")+
+    `</svg><p>Each step is one recorded result. The top line is ${Math.round(mx)}%.</p>`;
+}
+function board(){
+  const base=resolve(0),rows=Object.entries(PK).map(([u,d])=>({u,n:d.nick||"Player",s:score(d.picks||{},base)})).sort((a,b)=>b.s-a.s);
+  return `<h2 style="margin-top:20px;font-size:18px">Bracket challenge</h2><p>Tap My bracket picks and choose a winner for every match. Points double each round.</p>`+
+    (rows.length?rows.map((r,k)=>`<div class="trow"><div class="top"><span>${k+1}. ${esc(r.n)}${r.u===myKey()?" (you)":""}</span><b>${r.s} pts</b></div></div>`).join(""):`<p>No picks yet.</p>`);
+}
+function confetti(){
+  if(matchMedia("(prefers-reduced-motion:reduce)").matches)return;
+  const cv=$("cf"),x=cv.getContext("2d"),d=Math.min(devicePixelRatio||1,2),w=cv.width=innerWidth*d,h=cv.height=innerHeight*d,t0=performance.now();
+  const P=Array.from({length:150},()=>({x:Math.random()*w,y:-Math.random()*h*.5,vx:(Math.random()-.5)*4*d,vy:(2+Math.random()*4)*d,s:(5+Math.random()*7)*d,c:`hsl(${Math.random()*360} 90% 60%)`,a:Math.random()*6}));
+  (function f(){
+    x.clearRect(0,0,w,h);
+    P.forEach(q=>{q.x+=q.vx;q.y+=q.vy;q.a+=.15;x.save();x.translate(q.x,q.y);x.rotate(q.a);x.fillStyle=q.c;x.fillRect(-q.s/2,-q.s/4,q.s,q.s/2);x.restore()});
+    if(performance.now()-t0<4500)requestAnimationFrame(f);else x.clearRect(0,0,w,h);
+  })();
+}
+
+/* painting */
+function paint(){
+  const live=M&&M.status==="live",open=M&&M.status==="open",n=Object.keys(TM).length;
+  $("title").textContent=M?M.name:"Esports Bracket Predictor";
+  $("sub").textContent=!M?"Create a tournament, let teams enter by name, then generate the bracket and see who is most likely to win.":
+    (M.game||"Esports")+" tournament for "+M.size+" teams. "+(live?"The bracket is live.":"Registration is open.");
+  $("org").hidden=!isOrg;$("create").hidden=!!M;$("ctl").hidden=!M;$("go").hidden=!open;$("go").disabled=n<2;
+  $("sim").hidden=!live;$("tip").hidden=!(live&&(isOrg||mode===3));$("tip").textContent=mode===3?"Tap a team to pick who wins each match. Your picks earn points as real results come in.":"Tap a team to record it as the match winner. Tap it again to undo.";$("nick").hidden=!(live&&mode===3);const mp=PK[myKey()];if(mp&&!$("nick").value)$("nick").value=mp.nick||"";
+  $("lay").classList.toggle("nob",!live);
+  paintReg();paintBracket();paintSide();
+}
+function paintReg(){
+  const open=M&&M.status==="open";$("reg").hidden=!open;if(!open)return;
+  const n=Object.keys(TM).length,id=myId(),mine=id&&TM[id],full=n>=M.size;
+  $("regp").textContent=full&&!mine?"All "+M.size+" spots are taken.":n+" of "+M.size+" spots taken."+(db?"":" Entries stay on this device because shared sign-ups are not available here.");
+  $("join").disabled=full&&!mine;$("join").textContent=mine?"Update entry":"Enter team";$("leave").hidden=!mine;
+  const inp=$("tm");if(mine&&!inp.value&&document.activeElement!==inp){inp.value=TM[id].name;$("tt").value=TM[id].tag||"";if(TM[id].color)$("tc").value=TM[id].color}
+}
+function paintBracket(){
+  const el=$("bracket"),wrap=el.parentElement;wrap.hidden=!(M&&M.status==="live");if(wrap.hidden)return;
+  const n=N(),base=resolve(0),pk=myPk(),view=mode===3?resolve(0,{...pk,...M.results}):mode?resolve(mode):base;let h="";
+  const row=(t,o,r,m,real,w)=>{
+    if(!t)return `<div class="row tbd">${r===0?"Bye":"To be decided"}</div>`;
+    let cls=real?(t===real?"win":"lose"):(mode&&w===t?"win pred":"");
+    return `<div class="row ${cls}${(isOrg||mode===3)&&o&&!(mode===3&&real)?" click":""}" style="--tc:${col(t)}"${o?` data-t="${t}" data-r="${r}" data-m="${m}"`:""}>${emb(t)}<span>${nm(t)}</span><b>${o?Math.round(100*p(t,o))+"%":""}</b></div>`;
+  };
+  for(let r=0;r<n;r++){
+    h+=`<div class="col"><h3>${rname(r,n)}</h3><div class="matches">`;
+    for(let m=0;m<(M.size>>(r+1));m++){
+      const a=view[r][2*m],b=view[r][2*m+1],w=view[r+1][m],real=base[r+1][m];
+      h+=`<div class="match">${row(a,b,r,m,real,w)}${row(b,a,r,m,real,w)}</div>`;
+    }
+    h+=`</div></div>`;
+  }
+  const ch=base[n][0]||(mode?view[n][0]:null);
+  h+=`<div class="col"><h3>Champion</h3><div class="matches"><div class="match gold">`+(ch?
+    `<div class="row" style="--tc:${col(ch)}">${emb(ch)}<span style="text-align:center">${nm(ch)}${base[n][0]?"":" (predicted)"}</span></div>`:
+    `<div class="row tbd">To be decided</div>`)+`</div></div></div>`;
+  el.innerHTML=h;
+  if(base[n][0]&&celeb!==base[n][0]){celeb=base[n][0];confetti()}
+}
+function paintSide(){
+  const el=$("side"),ids=Object.keys(TM);
+  if(!M){el.innerHTML=`<h2>No tournament yet</h2><p>${isOrg?"Create one above to open sign-ups.":"The organizer has not created one. Check back soon."}</p>`;return}
+  if(M.status==="open"){
+    el.innerHTML=`<h2>${ids.length} of ${M.size} teams entered</h2><p>The bracket is generated when the organizer starts the tournament.</p>`+
+      (ids.length?ids.map(i=>`<div class="trow" style="--tc:${col(i)}"><div class="top">${emb(i)}<span>${nm(i)}${TM[i].tag?`<br><small class="tag">${esc(TM[i].tag)}</small>`:""}</span>${isOrg?`<button class="ghost sm" data-del="${i}">Remove</button>`:""}</div></div>`).join(""):`<p>No teams yet. Be the first to enter.</p>`);
+    return;
+  }
+  const o=odds(),list=M.order.filter(Boolean).sort((a,b)=>o[b]-o[a]);
+  const sc=Math.max(1,...list.map(i=>100*o[i]/SIMS))*1.15;
+  el.innerHTML=`<h2>Who lifts the trophy?</h2><p>${SIMS} simulated finishes from the current bracket. ${isOrg?"Drag a slider to set a team’s rating.":""}</p>`+
+    list.map(i=>{const pc=100*o[i]/SIMS;return `<div class="trow" style="--tc:${col(i)}"><div class="top">${emb(i)}<span>${nm(i)}</span><output>${rate(i)}</output><b>${pc.toFixed(1)}%</b></div>`+
+      (isOrg?`<input type="range" min="1000" max="2200" step="10" value="${rate(i)}" data-rate="${i}" aria-label="Rating">`:"")+
+      `<div class="bar"><u style="width:${Math.min(100,pc/sc*100)}%"></u></div></div>`}).join("")+chart(list)+board();
+}
+
+/* actions */
+$("mk").onclick=()=>saveMeta({name:$("tn").value.trim()||"Open Cup",game:$("tg").value.trim(),size:+$("ts").value,status:"open",order:[],ratings:{},results:{}});
+$("go").onclick=()=>{
+  const ids=Object.keys(TM),h=M.size/2,order=Array(M.size).fill("");
+  for(let i=ids.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[ids[i],ids[j]]=[ids[j],ids[i]]}
+  for(let k=0;k<h;k++){order[2*k]=ids[k]||"";order[2*k+1]=ids[h+k]||""}
+  mode=0;const m0={...M,status:"live",order,results:{}};saveMeta({...m0,hist:[snap(m0)]});
+};
+$("rs").onclick=()=>{Object.keys(TM).forEach(delTeam);mode=0;saveMeta(null)};
+$("join").onclick=async()=>{
+  const v=$("tm").value.trim(),id=myId(),n=Object.keys(TM).length;
+  if(!v||!M||M.status!=="open")return say("Type your team name first.");
+  if(Object.entries(TM).some(([i,t])=>t.name.toLowerCase()===v.toLowerCase()&&i!==id))return say("That team name is already taken.");
+  if(!(id&&TM[id])&&n>=M.size)return say("This tournament is full.");
+  await saveTeam(id||rid(),{name:v,tag:$("tt").value.trim(),color:$("tc").value});
+  if(!id){$("tm").value="";$("tt").value="";$("tc").value=PAL[(n+1)%8]}
+  say("Entry saved: "+v);
+};
+$("leave").onclick=()=>{delTeam(myId());$("tm").value=""};
+$("pr").onclick=()=>{mode=1;paint()};$("rn").onclick=()=>{mode=2;paint()};$("rl").onclick=()=>{mode=0;paint()};$("mb").onclick=()=>{mode=3;paint()};$("nick").onchange=()=>savePicks(myPk());
+document.addEventListener("click",e=>{
+  const d=e.target.closest("[data-del]");if(d&&isOrg)return delTeam(d.dataset.del);
+  const r=e.target.closest(".row[data-t]");
+  if(!r||!M||M.status!=="live")return;
+  const k=r.dataset.r+"-"+r.dataset.m,t=r.dataset.t;
+  if(mode===3){
+    if(M.results&&M.results[k])return say("That match is already decided.");
+    savePicks({...myPk(),[k]:t});return;
+  }
+  if(isOrg){
+    const res={...M.results};let hist=M.hist||[];
+    if(res[k]===t){delete res[k];if(hist.length>1)hist=hist.slice(0,-1)}
+    else{
+      const a=+r.dataset.r,m=+r.dataset.m,o=resolve(0)[a].slice(2*m,2*m+2).find(x=>x!==t);
+      if(o&&p(t,o)<.4)say("Upset! "+TM[t].name+" beat "+TM[o].name+".");
+      res[k]=t;hist=[...hist,snap({...M,results:res})];
+    }
+    saveMeta({...M,results:res,hist});
+  }
+});
+document.addEventListener("input",e=>{if(e.target.dataset.rate)e.target.closest(".trow").querySelector("output").textContent=e.target.value});
+document.addEventListener("change",e=>{const i=e.target.dataset.rate;if(i&&isOrg)saveMeta({...M,ratings:{...M.ratings,[i]:+e.target.value}})});
+
+/* start: shared database if this view has one, else local mode */
+(async()=>{
+  say("Loading…");paint();
+  try{
+    if(window.claude){
+      const [u,d]=await Promise.all([claude.use("user"),claude.use("db")]);
+      if(u&&d){isOrg=await u.canEdit();uid=await u.id();db=d;}
+    }
+  }catch(e){}
+  if(db&&uid){
+    db.doc("meta/tournament").onSnapshot(s=>{M=s.exists?s.data():null;paint()},fail);
+    db.collection("teams").onSnapshot(q=>{TM={};q.docs.forEach(s=>TM[s.id]=s.data());paint()},fail);
+    db.collection("picks").onSnapshot(q=>{PK={};q.docs.forEach(s=>PK[s.id]=s.data());paint()},fail);
+  }else{
+    db=null;isOrg=true;
+    try{
+      M=JSON.parse(localStorage.getItem("esports-meta")||"null");
+      TM=JSON.parse(localStorage.getItem("esports-teams")||"{}");
+      PK=JSON.parse(localStorage.getItem("esports-picks")||"{}");
+    }catch(e){M=null;TM={};PK={};}
+  }
+  say("");paint();
+})();
+
+/* floating embers */
+(()=>{
+  if(matchMedia("(prefers-reduced-motion:reduce)").matches)return;
+  const cv=document.getElementById("fx"),x=cv.getContext("2d"),P=[],cols=["255,200,64","255,46,147","255,255,255"];
+  let w,h,d;
+  const size=()=>{d=Math.min(devicePixelRatio||1,2);w=cv.width=innerWidth*d;h=cv.height=innerHeight*d};
+  size();addEventListener("resize",size);
+  for(let i=0;i<50;i++)P.push({x:Math.random(),y:Math.random(),s:.04+Math.random()*.08,r:1+Math.random()*2,c:cols[i%3],f:Math.random()*6});
+  (function loop(t){
+    x.clearRect(0,0,w,h);
+    for(const q of P){
+      q.y-=q.s/60;if(q.y<0)q.y=1;
+      x.fillStyle=`rgba(${q.c},${.25+.25*Math.sin(t/500+q.f)})`;
+      x.beginPath();x.arc(q.x*w+Math.sin(t/2000+q.f)*20*d,q.y*h,q.r*d,0,7);x.fill();
+    }
+    requestAnimationFrame(loop);
+  })(0);
+})();
+</script>
+<script>
+  if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
+    window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(() => {}));
+  }
+  </script>
+</body>
+</html>
